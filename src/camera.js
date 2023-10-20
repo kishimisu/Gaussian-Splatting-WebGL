@@ -15,7 +15,7 @@ class Camera {
 
         // False: orbit around object (mouse + wheel)
         // True: free-fly (mouse + AWSD)
-        this.freeFly = defaultCameraMode !== 'orbit'
+        this.freeFly = settings.freeFly = defaultCameraMode !== 'orbit'
 
         // True when the camera moved and the splats need to be sorted
         this.needsWorkerUpdate = true
@@ -91,7 +91,7 @@ class Camera {
         this.theta  = camera[0] ?? -Math.PI/2
         this.phi    = camera[1] ?? Math.PI/2
         this.radius = camera[2] ?? 3
-        this.freeFly = defaultCameraMode !== 'orbit'
+        this.freeFly = settings.freeFly = defaultCameraMode !== 'orbit'
         this.needsWorkerUpdate = true
         this.sceneRotationMatrix = rotateAlign(this.up, [0, 1, 0])
     }

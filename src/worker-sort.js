@@ -6,6 +6,7 @@ onmessage = function(event) {
     // Init web worker event
     if (event.data.gaussians) {
         gaussians = event.data.gaussians
+        gaussians.totalCount = gaussians.count
 
         depthIndex = new Uint32Array(gaussians.count)
 
@@ -23,7 +24,7 @@ onmessage = function(event) {
 
         const start = performance.now()
 
-        gaussians.count = maxGaussians
+        gaussians.count = Math.min(gaussians.totalCount, maxGaussians)
 
         // Sort the gaussians!
         sortGaussiansByDepth(depthIndex, gaussians, viewMatrix, sortingAlgorithm)

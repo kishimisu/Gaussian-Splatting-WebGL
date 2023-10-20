@@ -26,8 +26,8 @@ const settings = {
     speed: 0.07,
     fov: 47,
     debugDepth: false,
+    freeFly: false,
     sortTime: NaN,
-
     uploadFile: () => document.querySelector('#input').click()
 }
 
@@ -52,17 +52,16 @@ const defaultCameraParameters = {
 }
 
 // Init settings GUI panel
+let maxGaussianController = null
 function initGUI() {
     const gui = new lil.GUI()
-
-    settings.maxGaussians = Math.min(settings.maxGaussians, gaussianCount)
 
     gui.add(settings, 'scene', Object.keys(defaultCameraParameters)).name('Scene').listen()
        .onChange((scene) => loadScene({ scene }))
 
     gui.add(settings, 'renderResolution', 0.1, 1, 0.01).name('Preview Resolution')
 
-    gui.add(settings, 'maxGaussians', 1, gaussianCount, 1).name('Max Gaussians')
+    maxGaussianController = gui.add(settings, 'maxGaussians', 1, settings.maxGaussians, 1).name('Max Gaussians')
        .onChange(() => {
             cam.needsWorkerUpdate = true
             cam.updateWorker()
@@ -91,7 +90,11 @@ function initGUI() {
     gui.add(settings, 'debugDepth').name('Show Depth Map')
        .onChange(() => requestRender())
 
-    gui.add(cam, 'freeFly').name('Free Flying').listen()
+    gui.add(settings, 'freeFly').name('Free Flying').listen()
+       .onChange(value => {
+            cam.freeFly = value
+            requestRender()
+        })
 
     // File upload handler
     gui.add(settings, 'uploadFile').name('Upload .ply file')
@@ -140,11 +143,11 @@ async function main() {
         requestRender()
     }
 
-    // Load the default scene
-    await loadScene({ scene: settings.scene })
-
     // Setup GUI
     initGUI()
+
+    // Load the default scene
+    await loadScene({ scene: settings.scene })
 }
 
 // Load a .ply scene specified as a name (URL fetch) or local file
@@ -188,6 +191,11 @@ async function loadScene({scene, file}) {
     if (cam == null) cam = new Camera(cameraParameters)
     else cam.setParameters(cameraParameters)
     cam.update()
+
+    // Update GUI
+    settings.maxGaussians = Math.min(settings.maxGaussians, gaussianCount)
+    maxGaussianController.max(gaussianCount)
+    maxGaussianController.updateDisplay()
 }
 
 function requestRender(...params) {
