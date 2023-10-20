@@ -3,43 +3,20 @@
 Javascript and WebGL2 implementation of a 3D gaussian rasterizer based on the paper [3D Gaussian Splatting
 for Real-Time Radiance Field Rendering](https://repo-sam.inria.fr/fungraph/3d-gaussian-splatting/).
 
-I tried to match as closely as possible the original C++/CUDA implementation (which is split into multiple repositories) so that the question "where are these calculations coming from?" can easily be answered when looking through the code. For each function coming from the original paper, I annotate the file and line it's orginating from.
-
-More specifically, these two files were the most important to understand how the original rendering works:
-
-Gaussian data extraction from a .ply file and render setup:
-- [https://gitlab.inria.fr/sibr/../GaussianView.cpp](https://gitlab.inria.fr/sibr/sibr_core/-/blob/gaussian_code_release_union/src/projects/gaussianviewer/renderer/GaussianView.cpp)
-
-preprocessCUDA() and renderCUDA() methods:
-- [https://github.com/graphdeco-inria/diff-gaussian-rasterization/blob/main/../forward.cu](https://github.com/graphdeco-inria/diff-gaussian-rasterization/blob/main/cuda_rasterizer/forward.cu#L118)
+I tried to match as closely as possible the original C++/CUDA implementation (which is split into multiple repositories) so that the question "where are these calculations coming from?" can easily be answered when looking through the code.
 
 ## Live Demo
 
-[3D Gaussian Splatting
-for Real-Time Radiance Field Rendering](https://repo-sam.inria.fr/fungraph/3d-gaussian-splatting/).
+[https://webgl-gaussian-splatting.vercel.app/](https://webgl-gaussian-splatting.vercel.app/).
 
 ## Background
 
-### NeRFs
+I wanted to get a better understanding on how 3D gaussians splats are used in rasterization pipelines to achieve real time results, so I tried to reimplement the rendering algorithm in a framework I'm familiar with (WebGL).
+The next step if I find the time will be to make a WebGPU version too in order to compare the performances.
 
-The recent introduction of Neural Radiance Fields (NeRFs) opened many doors for 3D scene reconstruction using neural networks.
+## NeRFs and Gaussian Splatting
 
-NeRFs operate by training on a collection of images and corresponding camera positions obtained from a 3D environment to generate a density volume representing the scene.
-Given an input position and rotation, the network computes a density and radiance value for this volume, which are then used in a raymarching algorithm to traverse the scene and accumulates pixel colors.
-This process allow the reconstruction of images from novel camera positions not initially in the training data.
-
-NeRF-based techniques have demonstrated remarkable results in faithfully recreating complex 3D scenes including view-dependent lighting effects. However, the computational intensity of the raymarching process makes this approach unsuitable for real-time rendering on conventional hardware.
-
-### Gaussian Splatting
-
-Similar to NeRF-based approaches, gaussian splatting involves training a neural network from a set of images and associated camera positions in order to be able to reconstruct the scene from novel viewpoints.
-
-However, in this case, instead of generating a volumetric density/radiance representation of the scene, Gaussian splats are employed. These splats are essentially individual 3D objects that have attributes such as position, scale, rotation, and color.
-
-The neural network's task is to position and adjust these splats within the 3D scene to closely match with the input images. 
-A significant advantage of this approach is its compatibility with standard rasterization techniques, as opposed to resource-intensive raymarching: once the neural network has finished optimizing the gaussians, we don't need it anymore - we only need the data for each  splat and feed it to the GPU which will happilly rasterize them in parallel.
-
-Compared to NeRFs, Gaussian Splatting allow for real time renderings!
+(WIP)
 
 ## Implementation Details
 

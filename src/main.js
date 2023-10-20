@@ -89,7 +89,7 @@ function initGUI() {
     gui.add(settings, 'debugDepth').name('Show Depth Map')
        .onChange(() => requestRender())
 
-    gui.add(cam, 'freeFly').name('Free Flying')
+    gui.add(cam, 'freeFly').name('Free Flying').listen()
 }
 
 async function loadScene(scene) {
