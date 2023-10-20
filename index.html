@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>WebGL Gaussian Splat Renderer</title>
+
+		<!-- Libraries -->
+		<script src="https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/gl-matrix-min.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/lil-gui@0.18"></script>
+
+		<!-- Scripts -->
+		<script src="src/utils.js"></script>
+		<script src="src/camera.js"></script>
+		<script src="src/loader.js"></script>
+		<script src="src/main.js"></script>
+
+		<!-- Style -->
+		<style>
+			* {
+				margin: 0;
+				padding: 0;
+			}
+
+			body {
+				background-color: black;
+			}
+
+			canvas {
+				width: 100vw;
+				height: 100vh;
+				display: block;
+			}
+
+			#loading-container {
+				position: absolute;
+				display: flex;
+				flex-direction: column;
+				align-items: start;
+				justify-content: center;
+				top: 0;
+				left: 0;
+				width: 100%;
+				height: 100%;
+				padding: 0 80px;
+				box-sizing: border-box;
+				color: white;
+				transition: all 0.25s ease-in-out;
+				pointer-events: none;
+			}
+
+			#loading-text {
+				margin: 0 auto;
+			}
+
+			#loading-bar {
+				width: 0%;
+				height: 15px;
+				background-color: white;
+				margin: 40px 0;
+			}
+
+			#controls { 
+				width: 15%; 
+				margin: 0 auto; 
+			}
+		</style>
+	</head>
+	<body>
+		<!-- Canvas -->
+		<canvas id="canvas"></canvas>
+
+		<!-- Loading bar -->
+		<div id="loading-container">
+			<p id="loading-text">
+				Downloading 3D scene...
+			</p>
+			<div id="loading-bar"></div>
+			<img id="controls" src="controls.jpg">
+		</div>
+	</body>
+</html>
