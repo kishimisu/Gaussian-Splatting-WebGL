@@ -1,7 +1,7 @@
 const { mat4, vec3, vec4 } = glMatrix
 
 class Camera {
-    constructor({target = [0, 0, 0], up = [0, 1, 0], camera = [], defaultCameraMode}) {
+    constructor({target = [0, 0, 0], up = [0, 1, 0], camera = [], defaultCameraMode} = {}) {
         this.target = [...target] // Position of look-at target
         this.up = [...up]         // Up vector
 
@@ -15,10 +15,12 @@ class Camera {
 
         // False: orbit around object (mouse + wheel)
         // True: free-fly (mouse + AWSD)
-        this.freeFly = defaultCameraMode === 'freefly'
+        this.freeFly = defaultCameraMode !== 'orbit'
 
         // True when the camera moved and the splats need to be sorted
         this.needsWorkerUpdate = true
+
+        this.disableMovement = false
 
         // Keyboard state
         this.keyStates = {
@@ -48,17 +50,17 @@ class Camera {
 
         // Rotate camera around target
         gl.canvas.addEventListener('mousemove', e => {
-            if (!e.buttons) return
+            if (!e.buttons || this.disableMovement) return
     
-            this.phi += e.movementY * 0.01
-            this.theta -= e.movementX * 0.01
+            this.theta -= e.movementX * 0.01 * .5
+            this.phi = Math.max(1e-6, Math.min(Math.PI - 1e-6, this.phi + e.movementY * 0.01 * .5))
 
             requestRender()
         })
 
         // Zoom in and out
         gl.canvas.addEventListener('wheel', e => {
-            if (this.freeFly) return
+            if (this.freeFly || this.disableMovement) return
 
             this.radius = Math.max(1, this.radius + e.deltaY * 0.01)
 
@@ -67,13 +69,13 @@ class Camera {
 
         // Free-fly movement
         document.addEventListener('keydown', e => {
-            if (!this.freeFly || this.keyStates[e.code] == null) 
+            if (!this.freeFly || this.disableMovement || this.keyStates[e.code] == null) 
                 return
             this.keyStates[e.code] = true
         })
 
         document.addEventListener('keyup', e => {
-            if (!this.freeFly || this.keyStates[e.code] == null) 
+            if (!this.freeFly || this.disableMovement || this.keyStates[e.code] == null) 
                 return
             this.keyStates[e.code] = false
         })
@@ -83,19 +85,19 @@ class Camera {
     }
 
     // Reset parameters on new scene load
-    setParameters({target = [0, 0, 0], up = [0, 1, 0], camera = [], defaultCameraMode}) {
+    setParameters({target = [0, 0, 0], up = [0, 1, 0], camera = [], defaultCameraMode} = {}) {
         this.target = [...target]
         this.up = [...up]
         this.theta  = camera[0] ?? -Math.PI/2
         this.phi    = camera[1] ?? Math.PI/2
         this.radius = camera[2] ?? 3
-        this.freeFly = defaultCameraMode === 'freefly'
+        this.freeFly = defaultCameraMode !== 'orbit'
         this.needsWorkerUpdate = true
         this.sceneRotationMatrix = rotateAlign(this.up, [0, 1, 0])
     }
 
     updateKeys() {
-        if (Object.values(this.keyStates).every(s => !s)) return
+        if (Object.values(this.keyStates).every(s => !s) || this.disableMovement) return
 
         const front = this.getFront()
         const right = vec3.cross(this.right, front, this.up)

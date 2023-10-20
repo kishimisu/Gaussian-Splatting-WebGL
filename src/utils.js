@@ -69,7 +69,7 @@ function onCanvasResize(entries) {
         canvasSize = [width * dpr, height * dpr]
     }
     
-    if (gl != null) requestRender()
+    if (cam != null) requestRender()
 }
 
 // Create a program from a vertex and fragment shader

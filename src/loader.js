@@ -5,12 +5,14 @@ async function loadPly(content) {
     const contentStart = new TextDecoder('utf-8').decode(content.slice(0, 2000))
     const headerEnd = contentStart.indexOf('end_header') + 'end_header'.length + 1
     const [header] = contentStart.split('end_header')  // Header (string)
-    const array = new Float32Array(content.buffer, headerEnd) // Packed float32 data
+    const array = new Float32Array(content, headerEnd) // Packed float32 data
 
     // Get number of gaussians
     const regex = /element vertex (\d+)/
     const match = header.match(regex)
     gaussianCount = parseInt(match[1])
+
+    document.querySelector('#loading-text').textContent = `Success. Initializing ${gaussianCount} gaussians...`
 
     // Create arrays for gaussian properties
     const positions = []
@@ -146,13 +148,10 @@ function computeCov3D(scale, mod, rot) {
     return cov3D
 }
 
-// Download a .ply file chunk by chunk and monitor the progress
-async function downloadPly(url, onProgress) {
-    return new Promise(async (resolve, reject) => {
-        const response = await fetch(url)
-        const contentLength = parseInt(response.headers.get('content-length'))
+// Download a .ply file from a ReadableStream chunk by chunk and monitor the progress
+async function downloadPly(reader, contentLength) {
+    return new Promise(async (resolve, reject) => {        
         const buffer = new Uint8Array(contentLength)
-        const reader = response.body.getReader()
         let downloadedBytes = 0
 
         const readNextChunk = async () => {
