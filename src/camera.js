@@ -48,12 +48,37 @@ class Camera {
         this.vm = mat4.create()
         this.vpm = mat4.create()
 
-        // Rotate camera around target
+        // Rotate camera around target (mouse)
         gl.canvas.addEventListener('mousemove', e => {
             if (!e.buttons || this.disableMovement) return
     
             this.theta -= e.movementX * 0.01 * .5
             this.phi = Math.max(1e-6, Math.min(Math.PI - 1e-6, this.phi + e.movementY * 0.01 * .5))
+
+            requestRender()
+        })
+
+        // Rotate camera around target (touch)
+        const lastTouch = {}
+        gl.canvas.addEventListener('touchstart', e => {
+            e.preventDefault()
+            if (e.touches.length == 0 || this.disableMovement) return
+
+            lastTouch.clientX = e.touches[0].clientX
+            lastTouch.clientY = e.touches[0].clientY
+        })
+        gl.canvas.addEventListener('touchmove', e => {
+            e.preventDefault()
+            if (e.touches.length == 0 || this.disableMovement) return
+
+            const touch = e.touches[0]
+            const movementX = touch.clientX - lastTouch.clientX
+            const movementY = touch.clientY - lastTouch.clientY
+            lastTouch.clientX = touch.clientX
+            lastTouch.clientY = touch.clientY
+
+            this.theta -= movementX * 0.01 * .5 * .3
+            this.phi = Math.max(1e-6, Math.min(Math.PI - 1e-6, this.phi + movementY * 0.01 * .5))
 
             requestRender()
         })

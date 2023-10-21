@@ -27,7 +27,7 @@ const settings = {
     fov: 47,
     debugDepth: false,
     freeFly: false,
-    sortTime: NaN,
+    sortTime: 'NaN',
     uploadFile: () => document.querySelector('#input').click()
 }
 
@@ -98,8 +98,13 @@ function initGUI() {
 
     // File upload handler
     gui.add(settings, 'uploadFile').name('Upload .ply file')
-    document.querySelector('#input').addEventListener('change', e => {
-        loadScene({ file: e.target.files[0] })
+    document.querySelector('#input').addEventListener('change', async e => {
+        try {
+            await loadScene({ file: e.target.files[0] })
+        } catch (error) {
+            document.querySelector('#loading-text').textContent = `An error occured when trying to read the file.`
+            throw error
+        }
     })
 }
 
