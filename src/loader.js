@@ -6,7 +6,7 @@ async function loadPly(content) {
     const headerEnd = contentStart.indexOf('end_header') + 'end_header'.length + 1
     const [header] = contentStart.split('end_header')  // Header (string)
     const contentSlice = content.slice(headerEnd) // headerEnd may not be a multiple of 4, so we need to slice the buffer
-    const array = new Float32Array(contentSlice)
+    const array = new Float32Array(contentSlice) // Packed gaussian data
 
     // Get number of gaussians
     const regex = /element vertex (\d+)/
