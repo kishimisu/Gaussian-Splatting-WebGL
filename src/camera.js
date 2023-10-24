@@ -17,10 +17,18 @@ class Camera {
         // True: free-fly (mouse + AWSD)
         this.freeFly = settings.freeFly = defaultCameraMode !== 'orbit'
 
-        // True when the camera moved and the splats need to be sorted
+        // Indicate that the camera moved and the splats need to be sorted
         this.needsWorkerUpdate = true
 
+        // Is the user dragging the mouse?
+        this.isDragging = false
+
+        // Disable user input
         this.disableMovement = false
+
+        // Enable ray cast for camera calibration
+        this.isCalibrating = false
+        this.calibrationPoints = []
 
         // Keyboard state
         this.keyStates = {
@@ -51,9 +59,10 @@ class Camera {
         // Rotate camera around target (mouse)
         gl.canvas.addEventListener('mousemove', e => {
             if (!e.buttons || this.disableMovement) return
-    
+
             this.theta -= e.movementX * 0.01 * .5
             this.phi = Math.max(1e-6, Math.min(Math.PI - 1e-6, this.phi + e.movementY * 0.01 * .5))
+            this.isDragging = true
 
             requestRender()
         })
@@ -103,6 +112,17 @@ class Camera {
             if (!this.freeFly || this.disableMovement || this.keyStates[e.code] == null) 
                 return
             this.keyStates[e.code] = false
+        })
+
+        // Gizmo event
+        gl.canvas.addEventListener('mouseup', e => {
+            if (this.isDragging) {
+                this.isDragging = false
+                return
+            }
+            if (this.disableMovement || !this.isCalibrating) return
+
+            this.raycast(e.clientX, e.clientY)
         })
 
         // Update camera from mouse and keyboard inputs
@@ -202,6 +222,59 @@ class Camera {
             })
         }
     }
+
+    raycast(x, y) {
+        if (this.calibrationPoints.length >= 3) return
+        
+        // Calculate ray direction from mouse position
+        const Px = (x / window.innerWidth * 2 - 1)
+        const Py = -(y / window.innerHeight * 2 - 1)
+        const cameraToWorld = mat4.invert(mat4.create(), this.vpm)
+        const rayOriginWorld = vec3.transformMat4(vec3.create(), this.pos, cameraToWorld)
+        const rayPWorld = vec3.transformMat4(vec3.create(), [Px, Py, 1], cameraToWorld)
+        const rd = vec3.subtract(vec3.create(), rayPWorld, rayOriginWorld)
+        vec3.normalize(rd, rd)
+
+        // Raycast the gaussian splats
+        const hit = { id: -1, dist: 1e9 }
+        for (let i = 0; i < gaussianCount; i++) {
+            const pos = positionData.slice(i * 3, i * 3 + 3)
+            const alpha = opacityData[i]
+
+            if (alpha < 0.1) continue
+
+            const t = raySphereIntersection(this.pos, rd, pos, 0.1)
+
+            if (t > 0.4 && t < hit.dist) {
+                hit.id = i
+                hit.dist = t
+            }
+        }
+
+        if (hit.id == -1) return null
+
+        const hitPosition = vec3.add(vec3.create(), this.pos, vec3.scale(vec3.create(), rd, hit.dist))
+        this.calibrationPoints.push(hitPosition)
+
+        // Update gizmo renderer
+        gizmoRenderer.setPlaneVertices(...this.calibrationPoints)
+        requestRender()
+
+        return rd
+    }
+
+    resetCalibration() {
+        this.calibrationPoints = []
+        gizmoRenderer.setPlaneVertices()
+        requestRender()
+    }
+
+    finishCalibration() {
+        this.calibrationPoints = []
+        cam.up = gizmoRenderer.planeNormal
+        cam.sceneRotationMatrix = rotateAlign(gizmoRenderer.planeNormal, [0, 1, 0])
+        requestRender()
+    }
 }
 
 const invertRow = (mat, row) => {
@@ -230,4 +303,16 @@ function rotateAlign(v1, v2) {
     ]
   
     return result
+}
+
+// Calculate the intersection distance between a ray and a sphere
+// Return -1 if no intersection
+const raySphereIntersection = (rayOrigin, rayDirection, sphereCenter, sphereRadius) => {
+    const oc = vec3.subtract(vec3.create(), rayOrigin, sphereCenter)
+    const a = vec3.dot(rayDirection, rayDirection)
+    const b = 2 * vec3.dot(oc, rayDirection)
+    const c = vec3.dot(oc, oc) - sphereRadius * sphereRadius
+    const discriminant = b * b - 4 * a * c
+    if (discriminant < 0) return -1
+    return (-b - Math.sqrt(discriminant)) / (2 * a)
 }
