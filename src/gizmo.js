@@ -18,6 +18,7 @@ class GizmoRenderer {
 
         if (camController.p.textContent !== camController.texts['calibrated']) {
             camController.p.textContent = camController.texts['calibrated']
+            camController.finish.enable()
         }
         
         const v1v2 = vec3.subtract(vec3.create(), v2, v1)
@@ -62,6 +63,7 @@ class GizmoRenderer {
         const cornerCount = this.planeVertices.length / 3
         const drawCorners = cornerCount < 4
         gl.uniform1f(gl.getUniformLocation(this.program, 'draw_plane'), drawCorners ? 0 : 1)
+        gl.uniform1f(gl.getUniformLocation(this.program, 'aspect'), gl.canvas.width / gl.canvas.height)
 
         if (drawCorners) {
             gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, this.planeVertices.length / 3)

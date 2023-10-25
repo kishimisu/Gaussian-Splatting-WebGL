@@ -2,14 +2,21 @@
 precision mediump float;
 
 in vec2 coord;
-
 in float isPlane;
+
 out vec4 fragColor;
 
 void main() {
-    const float r = .02;
-    float d =  smoothstep(0., r, abs(fract(coord.x * 20.) - .5));
-    d = min(d, smoothstep(0., r, abs(fract(coord.y * 20.) - .5)));
-
-    fragColor = mix(vec4(1, 0, 0, 1), vec4(vec3(1,0,0), 1. - d), isPlane);
+    // Draw dots
+    if (isPlane < 0.5) {
+        float R = smoothstep(.2, .05, length(coord));
+        fragColor = vec4(R, 0, 0, R);
+    }
+    // Draw plane
+    else {
+        const float thickness = .03;
+        float d =  smoothstep(0., thickness, abs(fract(coord.x * 30.) - .5));
+        d = min(d, smoothstep(0., thickness, abs(fract(coord.y * 30.) - .5)));
+        fragColor = vec4(1, 0, 0, 1. - d);
+    }
 }

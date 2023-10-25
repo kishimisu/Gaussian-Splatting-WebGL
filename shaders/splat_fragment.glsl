@@ -1,7 +1,6 @@
 #version 300 es
 precision mediump float;
 
-uniform vec3 background_color;
 uniform bool show_depth_map;
 
 in vec3 col;

@@ -36,8 +36,8 @@ class Camera {
             KeyS: false,
             KeyA: false,
             KeyD: false,
-            KeyQ: false,
-            KeyE: false,
+            ShiftLeft: false,
+            Space: false
         }
 
         // Helper vectors
@@ -139,6 +139,7 @@ class Camera {
         this.freeFly = settings.freeFly = defaultCameraMode !== 'orbit'
         this.needsWorkerUpdate = true
         this.sceneRotationMatrix = rotateAlign(this.up, [0, 1, 0])
+        camController.resetCalibration()
     }
 
     updateKeys() {
@@ -151,8 +152,8 @@ class Camera {
         if (this.keyStates.KeyS) vec3.subtract(this.target, this.target, vec3.scale(front, front, settings.speed))
         if (this.keyStates.KeyA) vec3.add(this.target, this.target, vec3.scale(right, right, settings.speed))
         if (this.keyStates.KeyD) vec3.subtract(this.target, this.target, vec3.scale(right, right, settings.speed))
-        if (this.keyStates.KeyQ) vec3.add(this.target, this.target, vec3.scale(vec3.create(), this.up, settings.speed))
-        if (this.keyStates.KeyE) vec3.subtract(this.target, this.target, vec3.scale(vec3.create(), this.up, settings.speed))
+        if (this.keyStates.ShiftLeft) vec3.add(this.target, this.target, vec3.scale(vec3.create(), this.up, settings.speed))
+        if (this.keyStates.Space) vec3.subtract(this.target, this.target, vec3.scale(vec3.create(), this.up, settings.speed))
 
         requestRender()
     }
@@ -264,12 +265,14 @@ class Camera {
     }
 
     resetCalibration() {
+        this.isCalibrating = false
         this.calibrationPoints = []
         gizmoRenderer.setPlaneVertices()
         requestRender()
     }
 
     finishCalibration() {
+        this.isCalibrating = false
         this.calibrationPoints = []
         cam.up = gizmoRenderer.planeNormal
         cam.sceneRotationMatrix = rotateAlign(gizmoRenderer.planeNormal, [0, 1, 0])

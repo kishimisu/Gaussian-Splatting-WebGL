@@ -34,23 +34,26 @@ const settings = {
 }
 
 const defaultCameraParameters = {
-    'building': {
-        up: [0, 0.968912, 0.247403],
-        target: [-0.262075, 0.76138, 1.27392],
-        camera: [ -1.1807959999999995, 1.8300000000000007, 3.99],
-        defaultCameraMode: 'orbit'
-    },
     'room': {
         up: [0, 0.886994, 0.461779],
         target: [-0.428322434425354, 1.2004123210906982, 0.8184626698493958],
         camera: [4.950796326794864, 1.7307963267948987, 2.5],
-        defaultCameraMode: 'freefly'
+        defaultCameraMode: 'freefly',
+        size: '270mb'
     },
-    // 'garden': {
-    //     up: [0.055540, 0.928368, 0.367486],
-    //     target: [0.338164, 1.198655, 0.455374],
-    //     defaultCameraMode: 'orbit'
-    // }
+    'building': {
+        up: [0, 0.968912, 0.247403],
+        target: [-0.262075, 0.76138, 1.27392],
+        camera: [ -1.1807959999999995, 1.8300000000000007, 3.99],
+        defaultCameraMode: 'orbit',
+        size: '326mb'
+    },
+    'garden': {
+        up: [0.055540, 0.928368, 0.367486],
+        target: [0.338164, 1.198655, 0.455374],
+        defaultCameraMode: 'orbit',
+        size: '1.07gb [!]'
+    }
 }
 
 async function main() {
@@ -119,6 +122,7 @@ async function loadScene({scene, file}) {
 
     // Create a StreamableReader from a URL Response object
     if (scene != null) {
+        scene = scene.split('(')[0].trim()
         const url = `https://huggingface.co/kishimisu/3d-gaussian-splatting-webgl/resolve/main/${scene}.ply`
         const response = await fetch(url)
         contentLength = parseInt(response.headers.get('content-length'))
@@ -205,7 +209,6 @@ function render(width, height, res) {
     gl.uniformMatrix4fv(gl.getUniformLocation(program, 'viewmatrix'), false, cam.vm)
 
     // Custom parameters
-    gl.uniform3fv(gl.getUniformLocation(program, 'background_color'), hexToRGB(settings.bgColor))
     gl.uniform1i(gl.getUniformLocation(program, 'show_depth_map'), settings.debugDepth)
 
     // Draw
