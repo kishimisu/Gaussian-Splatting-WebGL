@@ -15,7 +15,7 @@ let camController = {
 
 // Init settings GUI panel
 function initGUI() {
-    const gui = new lil.GUI()
+    const gui = new lil.GUI({title: 'Settings'})
 
     const sceneNames = Object.entries(defaultCameraParameters).map(([name, { size }]) => `${name} (${size})`)
     settings.scene = sceneNames[0]
