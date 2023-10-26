@@ -1,12 +1,11 @@
 // Load all gaussian data from a point-cloud file
 // Original C++ implementation: https://gitlab.inria.fr/sibr/sibr_core/-/blob/gaussian_code_release_union/src/projects/gaussianviewer/renderer/GaussianView.cpp#L70
 async function loadPly(content) {
+    // Read header
     const start = performance.now()
     const contentStart = new TextDecoder('utf-8').decode(content.slice(0, 2000))
     const headerEnd = contentStart.indexOf('end_header') + 'end_header'.length + 1
-    const [header] = contentStart.split('end_header')  // Header (string)
-    const contentSlice = content.slice(headerEnd) // headerEnd may not be a multiple of 4, so we need to slice the buffer
-    const array = new Float32Array(contentSlice) // Packed gaussian data
+    const [ header ] = contentStart.split('end_header')
 
     // Get number of gaussians
     const regex = /element vertex (\d+)/
@@ -32,10 +31,36 @@ async function loadPly(content) {
     const sigmoid = (m1) => 1 / (1 + Math.exp(-m1))
     const NUM_PROPS = 62
 
+    // Create a dataview to access the buffer's content on a byte levele
+    const view = new DataView(content)
+
+    // Get a slice of the dataview relative to a splat index
+    const fromDataView = (splatID, start, end) => {
+        const startOffset = headerEnd + splatID * NUM_PROPS * 4 + start * 4
+
+        if (end == null) 
+            return view.getFloat32(startOffset, true)
+
+        return new Float32Array(end - start).map((_, i) => view.getFloat32(startOffset + i * 4, true))
+    }
+
+    // Extract all properties for a gaussian splat using the dataview
+    const extractSplatData = (splatID) => {
+        const position = fromDataView(splatID, 0, 3)
+        // const n = fromDataView(splatID, 3, 6) // Not used
+        const harmonic = fromDataView(splatID, 6, 9)
+        
+        const H_END = 6 + 48 // Offset of the last harmonic coefficient
+        const opacity = fromDataView(splatID, H_END)
+        const scale = fromDataView(splatID, H_END + 1, H_END + 4)
+        const rotation = fromDataView(splatID, H_END + 4, H_END + 8)
+    
+        return { position, harmonic, opacity, scale, rotation }
+    }
+
     for (let i = 0; i < gaussianCount; i++) {
         // Extract data for current gaussian
-        const bufferSlice = array.slice(i * NUM_PROPS, (i + 1) * NUM_PROPS)
-        let { position, harmonic, opacity, scale, rotation } = extractSplatData(bufferSlice)
+        let { position, harmonic, opacity, scale, rotation } = extractSplatData(i)
         
         // Update scene bounding box
         sceneMin = sceneMin.map((v, j) => Math.min(v, position[j]))
@@ -90,20 +115,6 @@ async function loadPly(content) {
     console.log(`Loaded ${gaussianCount} gaussians in ${((performance.now() - start)/1000).toFixed(3)}s`)
     
     return { positions, opacities, colors, cov3Ds }
-}
-
-// Extract data for a single gaussian
-function extractSplatData(data) {
-    const position = data.slice(0, 3)
-    // const n = data.slice(3, 6) // Not used
-    const harmonic = data.slice(6, 9) // Only extract the first 3 harmonic coefficients out of 48
-    
-    const H_END = 6 + 48 // Offset of the last harmonic coefficient
-    const opacity = data[H_END]
-    const scale = data.slice(H_END + 1, H_END + 4)
-    const rotation = data.slice(H_END + 4, H_END + 8)
-
-    return { position, harmonic, opacity, scale, rotation }
 }
 
 // Converts scale and rotation properties of each
