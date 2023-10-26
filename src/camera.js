@@ -268,7 +268,6 @@ class Camera {
         this.isCalibrating = false
         this.calibrationPoints = []
         gizmoRenderer.setPlaneVertices()
-        requestRender()
     }
 
     finishCalibration() {
